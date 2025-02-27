@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ChevronDown, X } from "lucide-react";
 
 import {
+  Avatar,
   Box,
   Chip,
   FormControl,
@@ -11,14 +12,11 @@ import {
   Select,
   SelectChangeEvent,
 } from "@mui/material";
-
-const users = [
-  { name: "John Doe", email: "john@doe.com", role: "Admin" },
-  { name: "Jane Smith", email: "jane@smith.com", role: "User" },
-  { name: "Alice Johnson", email: "alice@johnson.com", role: "Editor" },
-];
+import { useBookings } from "@/context/BookingContext";
 
 export default function UserList() {
+  const { users, bookings, addUser } = useBookings();
+
   const attributes = ["name", "email", "role"];
   const [filters, setFilters] = useState<string[]>([]);
 
@@ -68,24 +66,44 @@ export default function UserList() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 text-sm font-medium text-gray-500 bg-gray-100 p-2 rounded-md">
+      <div className="grid grid-cols-6 text-sm font-medium text-gray-500 bg-gray-100 p-2 rounded-md">
+        <span>Avatar</span>
         <span>Name</span>
+        <span>Phone</span>
         <span>Email</span>
-        <span>Role</span>
+        <span>City</span>
+        <span></span>
       </div>
 
       {/* User List */}
       <div className="space-y-2">
-        {users.map((user, index) => (
-          <div
-            key={index}
-            className="grid grid-cols-3 p-2 rounded-md hover:bg-gray-50 transition"
-          >
-            <span className="text-gray-800">{user.name}</span>
-            <span className="text-gray-600">{user.email}</span>
-            <span className="text-blue-500 font-medium">{user.role}</span>
-          </div>
-        ))}
+        {users.map((user, index) => {
+          const userBookings = bookings.filter((b) => b.userId === user.id);
+
+          return (
+            <div
+              key={index}
+              className="grid grid-cols-6 items-center p-2 rounded-md hover:bg-gray-50 transition cursor-pointer"
+            >
+              <Avatar />
+              <span className="text-gray-800">{user.name}</span>
+              <span className="text-gray-600">{user.phone}</span>
+              <span className="text-gray-600">{user.email}</span>
+              <span className="text-gray-600">{user.city}</span>
+
+              <div className="flex items-center space-x-2">
+                {userBookings.map((booking, index) => (
+                  <span
+                    key={index}
+                    className="inline-block w-6 h-6 rounded-full ml-2"
+                    style={{ backgroundColor: booking.color }}
+                    title={`${booking.startDate} - ${booking.endDate}`}
+                  ></span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
