@@ -4,10 +4,13 @@ import { Bookings, User } from "@/data/data";
 interface BookingContextProps {
   users: User[];
   bookings: Bookings[];
-  addUser: (user: User) => void;
-  addBooking: (booking: Omit<Bookings, "color">) => void;
-  removeBooking: (booking: Bookings) => void;
+  addUser: (user: Omit<User, "id">) => void;
   removeUser: (user: User) => void;
+  addBooking: (
+    booking: Omit<Bookings, "id" | "color" | "userId">,
+    userId: number
+  ) => void;
+  removeBooking: (booking: Bookings) => void;
   calculateHeight: (startDate: string, endDate: string) => string;
 }
 
@@ -65,13 +68,28 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
     return ((end - start) / totalDay) * 100 + "%";
   };
 
-  const addUser = (user: User) => {
-    setUsers([...users, user]);
+  const addUser = (user: Omit<User, "id">) => {
+    const lastUser = users[users.length - 1];
+    const id = lastUser ? lastUser.id + 1 : 1;
+
+    const newUser = {
+      ...user,
+      id,
+    };
+
+    setUsers([...users, newUser]);
   };
 
-  const addBooking = (booking: Omit<Bookings, "color">) => {
+  const addBooking = (
+    booking: Omit<Bookings, "color" | "userId" | "id">,
+    userId: number
+  ) => {
     const color = generateRandomColor();
-    const newBooking = { ...booking, color };
+    const lastBooking = bookings[bookings.length - 1];
+    const id = lastBooking ? lastBooking.id + 1 : 1;
+
+    const newBooking = { ...booking, userId, color, id };
+
     setBookings((prev) => sortBookings([...prev, newBooking]));
   };
 

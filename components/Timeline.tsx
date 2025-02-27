@@ -7,7 +7,10 @@ export default function Timeline() {
     const hours = date.getHours();
     const minutes = date.getMinutes();
 
-    return `${hours}:${minutes}`;
+    const formattedHours = hours < 10 ? `0${hours}` : hours;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+    return `${formattedHours}:${formattedMinutes}`;
   };
 
   return (
@@ -18,6 +21,7 @@ export default function Timeline() {
 
         return (
           <div
+            key={index}
             className="rounded-sm flex flex-col justify-between overflow-hidden text-white text-[10px] px-2 cursor-pointer"
             style={{
               height: calculateHeight(booking.startDate, booking.endDate),

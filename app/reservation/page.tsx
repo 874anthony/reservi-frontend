@@ -1,6 +1,6 @@
 "use client";
 
-import Forms from "@/components/Forms";
+import Forms from "@/components/forms/Forms";
 import Timeline from "@/components/Timeline";
 import UserList from "@/components/UserList";
 import { BookingsProvider } from "@/context/BookingContext";
