@@ -1,10 +1,10 @@
 "use client";
-import { useState } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   Avatar,
   Box,
+  Button,
   Chip,
   FormControl,
   InputLabel,
@@ -13,18 +13,78 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useBookings } from "@/context/BookingContext";
+import { User } from "@/data/data";
 
 export default function UserList() {
-  const { users, bookings, addUser } = useBookings();
+  const { users, bookings, removeUser, updateUser } = useBookings();
+  const attributes = ["name", "phone", "email", "city"];
 
-  const attributes = ["name", "email", "role"];
   const [filters, setFilters] = useState<string[]>([]);
+  const [search, setSearch] = useState<string>("");
+  const [filteredUsers, setFilteredUsers] = useState(users);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [openModal, setOpenModal] = useState(false);
 
   const handleChange = (event: SelectChangeEvent<typeof filters>) => {
     const { value } = event.target;
 
     setFilters(typeof value === "string" ? value.split(",") : value);
   };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
+  };
+
+  const handleEdit = (user: User) => {
+    setSelectedUser(user);
+    setOpenModal(true);
+  };
+
+  const handleModalClose = () => {
+    setSelectedUser(null);
+    setOpenModal(false);
+  };
+
+  const handleUpdate = () => {
+    if (selectedUser) {
+      updateUser(selectedUser);
+      handleModalClose();
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      let filteredUsers = users;
+
+      if (search.trim()) {
+        filteredUsers = users.filter((user: Omit<User, "id">) => {
+          const searchTerm = search.toLowerCase();
+
+          // No filters
+          if (filters.length === 0) {
+            return attributes.some((attribute) => {
+              return user[attribute as keyof typeof user]
+                ?.toLowerCase()
+                .includes(searchTerm);
+            });
+          }
+
+          // Filters applied
+          if (filters.length > 0) {
+            return filters.some((filter) => {
+              return user[filter as keyof typeof user]
+                ?.toLowerCase()
+                .includes(searchTerm);
+            });
+          }
+        });
+      }
+
+      setFilteredUsers(filteredUsers);
+    }, 1500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [search, filters, users]);
 
   return (
     <div className="w-full h-full p-8 space-y-6 bg-white rounded-lg shadow-md">
@@ -35,6 +95,8 @@ export default function UserList() {
           <input
             type="text"
             placeholder="Search users..."
+            value={search}
+            onChange={handleSearch}
             className="w-full p-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           />
 
@@ -66,24 +128,25 @@ export default function UserList() {
         </div>
       </div>
 
-      <div className="grid grid-cols-6 text-sm font-medium text-gray-500 bg-gray-100 p-2 rounded-md">
+      <div className="grid grid-cols-7 text-sm font-medium text-gray-500 bg-gray-100 p-2 rounded-md">
         <span>Avatar</span>
         <span>Name</span>
         <span>Phone</span>
         <span>Email</span>
         <span>City</span>
         <span></span>
+        <span>Actions</span>
       </div>
 
       {/* User List */}
       <div className="space-y-2">
-        {users.map((user, index) => {
+        {filteredUsers.map((user, index) => {
           const userBookings = bookings.filter((b) => b.userId === user.id);
 
           return (
             <div
               key={index}
-              className="grid grid-cols-6 items-center p-2 rounded-md hover:bg-gray-50 transition cursor-pointer"
+              className="grid grid-cols-7 items-center p-2 rounded-md hover:bg-gray-50 transition cursor-pointer"
             >
               <Avatar />
               <span className="text-gray-800">{user.name}</span>
@@ -101,10 +164,74 @@ export default function UserList() {
                   ></span>
                 ))}
               </div>
+
+              <div className="flex items-center gap-2 cursor-pointer">
+                <Button variant="contained" onClick={() => handleEdit(user)}>
+                  Edit
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  color="error"
+                  onClick={() => removeUser(user.id)}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {openModal && selectedUser && (
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg text-black font-bold mb-4">Edit User</h2>
+            <input
+              type="text"
+              value={selectedUser.name}
+              onChange={(e) =>
+                setSelectedUser({ ...selectedUser, name: e.target.value })
+              }
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <input
+              type="text"
+              value={selectedUser.phone}
+              onChange={(e) =>
+                setSelectedUser({ ...selectedUser, phone: e.target.value })
+              }
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <input
+              type="text"
+              value={selectedUser.email}
+              onChange={(e) =>
+                setSelectedUser({ ...selectedUser, email: e.target.value })
+              }
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <input
+              type="text"
+              value={selectedUser.city}
+              onChange={(e) =>
+                setSelectedUser({ ...selectedUser, city: e.target.value })
+              }
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <Button variant="contained" onClick={handleUpdate}>
+              Save
+            </Button>
+            <Button sx={{ ml: 2 }} color="error" onClick={handleModalClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

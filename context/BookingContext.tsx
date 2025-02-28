@@ -5,11 +5,13 @@ interface BookingContextProps {
   users: User[];
   bookings: Bookings[];
   addUser: (user: Omit<User, "id">) => void;
-  removeUser: (user: User) => void;
+  removeUser: (id: number) => void;
   addBooking: (
     booking: Omit<Bookings, "id" | "color" | "userId">,
     userId: number
   ) => void;
+
+  updateUser: (user: User) => void;
   removeBooking: (booking: Bookings) => void;
   calculateHeight: (startDate: string, endDate: string) => string;
 }
@@ -97,8 +99,12 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
     setBookings(bookings.filter((b) => b.id !== booking.id));
   };
 
-  const removeUser = (user: User) => {
-    setUsers(users.filter((u) => u.id !== user.id));
+  const removeUser = (id: number) => {
+    setUsers(users.filter((u) => u.id !== id));
+  };
+
+  const updateUser = (user: User) => {
+    setUsers(users.map((u) => (u.id === user.id ? user : u)));
   };
 
   return (
@@ -110,6 +116,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
         addBooking,
         removeBooking,
         removeUser,
+        updateUser,
         calculateHeight,
       }}
     >
