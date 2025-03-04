@@ -1,19 +1,16 @@
 import { createContext, ReactNode, useContext, useState } from "react";
-import { Bookings, User } from "@/data/data";
+import { Bookings, AddBooking, User } from "@/data/data";
 
 interface BookingContextProps {
   users: User[];
   bookings: Bookings[];
   addUser: (user: Omit<User, "id">) => void;
   removeUser: (id: number) => void;
-  addBooking: (
-    booking: Omit<Bookings, "id" | "color" | "userId">,
-    userId: number
-  ) => void;
-
+  addBooking: (booking: AddBooking, userId: number) => void;
   updateUser: (user: User) => void;
   removeBooking: (booking: Bookings) => void;
   calculateHeight: (startDate: string, endDate: string) => string;
+  isBookingOverlap: (newBooking: AddBooking) => boolean;
 }
 
 const BookingsContext = createContext<BookingContextProps | undefined>(
@@ -41,18 +38,24 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
     },
   ]);
 
-  const [bookings, setBookings] = useState<Bookings[]>([
-    {
-      id: 1,
-      userId: 1,
-      startDate: "2022-01-01T12:30:00",
-      endDate: "2022-01-01T14:30:00",
-      color: "#FF5733",
-    },
-  ]);
+  const [bookings, setBookings] = useState<Bookings[]>([]);
 
   const generateRandomColor = () => {
-    const colors = ["#FF5733", "#33C4FF", "#33FF57", "#FFC433", "#C433FF"];
+    const colors = [
+      "#FF5733",
+      "#33C4FF",
+      "#33FF57",
+      "#FFC433",
+      "#C433FF",
+      "#040720",
+      "#0C090A",
+      "#34282C",
+      "#3B3131",
+      "#3A3B3C",
+      "#454545",
+      "#4D4D4F",
+      "#413839",
+    ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
 
@@ -82,10 +85,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
     setUsers([...users, newUser]);
   };
 
-  const addBooking = (
-    booking: Omit<Bookings, "color" | "userId" | "id">,
-    userId: number
-  ) => {
+  const addBooking = (booking: AddBooking, userId: number) => {
     const color = generateRandomColor();
     const lastBooking = bookings[bookings.length - 1];
     const id = lastBooking ? lastBooking.id + 1 : 1;
@@ -93,6 +93,20 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
     const newBooking = { ...booking, userId, color, id };
 
     setBookings((prev) => sortBookings([...prev, newBooking]));
+  };
+
+  const isBookingOverlap = (newBooking: AddBooking) => {
+    return bookings.some((booking) => {
+      const newBookingStart = new Date(newBooking.startDate).getTime();
+      const newBookingEnd = new Date(newBooking.endDate).getTime();
+      const bookingStart = new Date(booking.startDate).getTime();
+      const bookingEnd = new Date(booking.endDate).getTime();
+
+      return (
+        (newBookingStart >= bookingStart && newBookingStart <= bookingEnd) ||
+        (newBookingEnd >= bookingStart && newBookingEnd <= bookingEnd)
+      );
+    });
   };
 
   const removeBooking = (booking: Bookings) => {
@@ -118,6 +132,7 @@ export const BookingsProvider = ({ children }: { children: ReactNode }) => {
         removeUser,
         updateUser,
         calculateHeight,
+        isBookingOverlap,
       }}
     >
       {children}

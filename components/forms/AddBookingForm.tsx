@@ -1,9 +1,11 @@
+import { useState } from "react";
 import useForm from "@/hooks/useForm";
 import { useBookings } from "@/context/BookingContext";
 
 import { Bookings } from "@/data/data";
 
 import {
+  Alert,
   Button,
   FormControl,
   InputLabel,
@@ -27,7 +29,9 @@ const validationRules = {
 };
 
 export default function AddBookingForm() {
-  const { users, addBooking } = useBookings();
+  const { users, addBooking, isBookingOverlap } = useBookings();
+  const [isOverlap, setIsOverlap] = useState(false);
+  const [isError, setIsError] = useState("");
 
   const { formData, errors, loading, handleChange, handleSubmit } =
     useForm<Bookings>(
@@ -35,6 +39,22 @@ export default function AddBookingForm() {
       (data) => addBooking(data, data.userId),
       validationRules
     );
+
+  const handleBookingSubmit = () => {
+    if (isBookingOverlap(formData)) {
+      setIsOverlap(true);
+      return;
+    }
+
+    if (formData.startDate >= formData.endDate) {
+      setIsError("La fecha de inicio debe ser menor a la fecha de fin");
+      return;
+    }
+
+    setIsError("");
+    setIsOverlap(false);
+    handleSubmit();
+  };
 
   return (
     <div className="flex flex-col gap-8 items-center bg-white rounded-lg shadow-md p-4">
@@ -101,11 +121,17 @@ export default function AddBookingForm() {
       <Button
         variant="contained"
         color="primary"
-        onClick={handleSubmit}
+        onClick={handleBookingSubmit}
         disabled={loading}
       >
         {loading ? "Cargando..." : "Agregar fecha"}
       </Button>
+
+      {isOverlap && (
+        <Alert severity="error">La fecha se superpone con otra</Alert>
+      )}
+
+      {isError && <Alert severity="error">{isError}</Alert>}
     </div>
   );
 }

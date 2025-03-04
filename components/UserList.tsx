@@ -13,17 +13,23 @@ import {
   SelectChangeEvent,
 } from "@mui/material";
 import { useBookings } from "@/context/BookingContext";
-import { User } from "@/data/data";
+import { Bookings, User } from "@/data/data";
 
 export default function UserList() {
-  const { users, bookings, removeUser, updateUser } = useBookings();
+  const { users, bookings, removeUser, removeBooking, updateUser } =
+    useBookings();
   const attributes = ["name", "phone", "email", "city"];
 
   const [filters, setFilters] = useState<string[]>([]);
   const [search, setSearch] = useState<string>("");
   const [filteredUsers, setFilteredUsers] = useState(users);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // Modals
   const [openModal, setOpenModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  const [openModalBooking, setOpenModalBooking] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Bookings | null>(null);
 
   const handleChange = (event: SelectChangeEvent<typeof filters>) => {
     const { value } = event.target;
@@ -43,6 +49,17 @@ export default function UserList() {
   const handleModalClose = () => {
     setSelectedUser(null);
     setOpenModal(false);
+  };
+
+  const handleBookingEdit = (booking: Bookings) => {
+    setSelectedBooking(booking);
+    setOpenModalBooking(true);
+  };
+
+  const handleBookingDelete = (booking: Bookings) => {
+    removeBooking(booking);
+    setSelectedBooking(null);
+    setOpenModalBooking(false);
   };
 
   const handleUpdate = () => {
@@ -158,6 +175,7 @@ export default function UserList() {
                 {userBookings.map((booking, index) => (
                   <span
                     key={index}
+                    onClick={() => handleBookingEdit(booking)}
                     className="inline-block w-6 h-6 rounded-full ml-2"
                     style={{ backgroundColor: booking.color }}
                     title={`${booking.startDate} - ${booking.endDate}`}
@@ -227,6 +245,47 @@ export default function UserList() {
               Save
             </Button>
             <Button sx={{ ml: 2 }} color="error" onClick={handleModalClose}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {openModalBooking && selectedBooking && (
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h2 className="text-lg text-black font-bold mb-4">
+              Look Reservation
+            </h2>
+            <input
+              type="text"
+              value={selectedBooking.startDate}
+              disabled
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <input
+              type="text"
+              value={selectedBooking.endDate}
+              disabled
+              className="block w-full p-2 border border-gray-300 rounded-lg mb-4 text-black"
+            />
+
+            <Button
+              sx={{ mr: 2 }}
+              color="error"
+              onClick={() => handleBookingDelete(selectedBooking as Bookings)}
+            >
+              Delete reservation
+            </Button>
+
+            <Button
+              variant="contained"
+              onClick={() => {
+                setSelectedBooking(null);
+                setOpenModalBooking(false);
+              }}
+            >
               Cancel
             </Button>
           </div>
